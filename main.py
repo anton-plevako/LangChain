@@ -17,7 +17,14 @@ llm = ChatOpenAI()
 
 vector_store = PineconeVectorStore(
     index_name=os.environ['INDEX_NAME'], embedding=embeddings)
-retriever = vector_store.as_retriever(search_kwargs={"k":3})
+retriever = vector_store.as_retriever(
+    search_type="mmr",
+    search_kwargs={
+        "k": 15,
+        "fetch_k": 50,
+        "filter": {"speakers": {"$in": ["MR. KATYAL"]}}
+    }
+)
 
 prompt_template = ChatPromptTemplate.from_template(
     """answer the question based only on the following context:
@@ -60,13 +67,14 @@ def create_retrieval_with_lcel():
 if __name__ == "__main__":
     print("Retrieving...")
 
-    query = "what is Pinecone in machine learning?"
+    query = """What does MR. KATYAL argue specifically about the plain meaning of statutory words like "regulate," "license," or "adjust"?
+    Focus only on how he interprets the statutory language itself. Do not include structural or constitutional arguments."""
 
     # print(llm.invoke([HumanMessage(content=query)]).content)
 
     # print(retrieval_chain_without_lcel(query=query))
 
-    query_dict = {"query": "what is Pinecone?"}
+    query_dict = {"query": query}
     chain_with_lcel = create_retrieval_with_lcel()
     result_with_lcel = chain_with_lcel.invoke(query_dict)
     print(result_with_lcel)
